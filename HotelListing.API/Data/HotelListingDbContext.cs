@@ -34,7 +34,6 @@ namespace HotelListing.API.Data
                     Name = "Australia",
                     ShortName = "AU"
                 }
-            
              );
             modelBuilder.Entity<Hotel>().HasData(
                 new Hotel
@@ -65,6 +64,4 @@ namespace HotelListing.API.Data
              );
         }
     }
-
- 
 }
