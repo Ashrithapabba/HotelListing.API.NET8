@@ -16,13 +16,14 @@ namespace HotelListing.API.Controllers
     [ApiController]
     public class HotelsController : ControllerBase
     {
-        private IHotelsRepository _hotelsRepository;
-        private readonly IMapper _mapper;
 
-        public HotelsController(IHotelsRepository hotelsRepository, IMapper mapper)
+        private readonly IMapper _mapper;
+        private IHotelsRepository _hotelsRepository;
+
+        public HotelsController(IMapper mapper, IHotelsRepository hotelsRepository)
         {
-           this._hotelsRepository = hotelsRepository;
             this._mapper = mapper;
+            this._hotelsRepository = hotelsRepository;
         }
 
         // GET: api/Hotels
@@ -30,7 +31,7 @@ namespace HotelListing.API.Controllers
         public async Task<ActionResult<IEnumerable<HotelDto>>> GetHotels()
         {
             var hotels = await _hotelsRepository.GetAllAsync();
-            return _mapper.Map<List<HotelDto>>(hotels); 
+            return Ok(_mapper.Map<List<HotelDto>>(hotels)); 
         }
 
         // GET: api/Hotels/5
@@ -44,7 +45,7 @@ namespace HotelListing.API.Controllers
                 return NotFound();
             }
 
-            return Ok(_mapper.Map<List<HotelDto>>(hotel));
+            return Ok(_mapper.Map<HotelDto>(hotel));
         }
 
         // PUT: api/Hotels/5
