@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using HotelListing.API.Contracts;
+using HotelListing.API.Controllers;
 using HotelListing.API.Data;
 using HotelListing.API.Models.Users;
 using Microsoft.AspNetCore.Identity;
@@ -16,15 +17,18 @@ namespace HotelListing.API.Repository
         private readonly IMapper _mapper;
         private readonly UserManager<ApiUser> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthManager> _logger;
         private ApiUser _user;
 
         private const string _loginProvider = "HotelListingApi";
         private const string _refreshToken = "RefreshToken";
-        public AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConfiguration configuration)
+        public AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConfiguration configuration, ILogger<AuthManager> logger)
         {
             this._mapper = mapper;
             this._userManager = userManager;
-            
+            this._configuration = configuration;
+            this._logger = logger;
+
         }
 
         public async Task<string> CreateRefreshToken()
@@ -38,16 +42,18 @@ namespace HotelListing.API.Repository
 
         public async Task<AuthResponseDto> Login(LoginDto loginDto)
         {
-            bool isValidUser = false;
-
+            _logger.LogInformation($"Looking for user with email {loginDto.Email}");
             _user = await _userManager.FindByEmailAsync(loginDto.Email);
-            isValidUser = await _userManager.CheckPasswordAsync(_user, loginDto.Password);
+           bool isValidUser = await _userManager.CheckPasswordAsync(_user, loginDto.Password);
             
             if(_user == null || isValidUser == false)
             {
+                _logger.LogWarning($"User with email {loginDto.Email} was not found");
                 return null;
             }
             var token = await GenerateToken();
+            _logger.LogInformation($"Token generated for user with email {loginDto.Email}| Token: {token}");
+
             return new AuthResponseDto
             {
                 Token = token,
@@ -56,12 +62,12 @@ namespace HotelListing.API.Repository
             };
         }
         
-        public async Task<IEnumerable<IdentityError>> Register(ApiUserDto userDto)
+        public async Task<IEnumerable<IdentityError>> Register(ApiUserDto apiuserDto)
         {
-            _user = _mapper.Map<ApiUser>(userDto);
-            _user.UserName = userDto.Email;
+            _user = _mapper.Map<ApiUser>(apiuserDto);
+            _user.UserName = apiuserDto.Email;
 
-            var result = await _userManager.CreateAsync(_user, userDto.Password);
+            var result = await _userManager.CreateAsync(_user, apiuserDto.Password);
 
             if(result.Succeeded)
             {
@@ -102,14 +108,14 @@ namespace HotelListing.API.Repository
 
         private async Task<string> GenerateToken()
         {
-            var securitykey =new  SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]));
+          // var whatIs = _configuration.GetSection("JwtSettings:Key");
+
+            var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]));
 
             var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
 
             var roles = await _userManager.GetRolesAsync(_user);
-
-            var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x )).ToList();
-
+            var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x)).ToList();
             var userClaims = await _userManager.GetClaimsAsync(_user);
 
             var claims = new List<Claim>

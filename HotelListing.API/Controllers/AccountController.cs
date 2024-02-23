@@ -1,5 +1,4 @@
 ﻿using HotelListing.API.Contracts;
-using HotelListing.API.Data;
 using HotelListing.API.Models.Users;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,58 +10,80 @@ namespace HotelListing.API.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAuthManager _authManager;
-        public AccountController(IAuthManager authManager)
+        private readonly ILogger _logger;
+
+        public AccountController(IAuthManager authManager, ILogger<AccountController> logger)
         {
             this._authManager = authManager;
+            this._logger = logger;
         }
 
-        //POST: api/Account/register
+        // POST: api/Account/register
         [HttpPost]
         [Route("register")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-
-        public async Task<ActionResult> Register([FromBody]ApiUserDto apiUserDto)
+        public async Task<ActionResult> Register([FromBody] ApiUserDto apiUserDto)
         {
-            var errors = await _authManager.Register(apiUserDto);
-
-            if (errors.Any())
+            _logger.LogInformation($"Registration Attempt for {apiUserDto.Email}");
+            try
             {
-                foreach (var error in errors)
-                {
-                    ModelState.AddModelError(error.Code, error.Description);
-                }
-                return BadRequest(ModelState);
-            }
-            return Ok();
-        }
+                var errors = await _authManager.Register(apiUserDto);
 
-        //POST: api/Account/login
+                if (errors.Any())
+                {
+                    foreach (var error in errors)
+                    {
+                        ModelState.AddModelError(error.Code, error.Description);
+                    }
+                    return BadRequest(ModelState);
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Something went wrong in the {nameof(Register)} - User Registration attempt for  { apiUserDto.Email}");
+                return Problem($"Something went wrong in the {nameof(Register)} - Please contact the support", statusCode: 500);
+            }
+        }
+            
+
+        // POST: api/Account/login
         [HttpPost]
         [Route("login")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-
         public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
         {
-            var authResponse = await _authManager.Login(loginDto);
-
-            if (authResponse == null)
+            _logger.LogInformation($"Login Attempt for {loginDto.Email}");
+            try
             {
-                return Unauthorized();
-            }
-            return Ok(authResponse);
-        }
+                var authResponse = await _authManager.Login(loginDto);
 
-        //POST: api/Account/refrestoken
+                if (authResponse == null)
+                {
+                    return Unauthorized();
+                }
+
+                return Ok(authResponse);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Something went wrong in the {nameof(Login)} - User Login attempt for  {loginDto.Email}");
+                return Problem($"Something went wrong in the {nameof(Login)} - Please contact the support", statusCode: 500);
+            }
+         }
+            
+
+        // POST: api/Account/refreshtoken
         [HttpPost]
         [Route("refreshtoken")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-
         public async Task<ActionResult> RefreshToken([FromBody] AuthResponseDto request)
         {
             var authResponse = await _authManager.VerifyRefreshToken(request);
@@ -71,9 +92,8 @@ namespace HotelListing.API.Controllers
             {
                 return Unauthorized();
             }
+
             return Ok(authResponse);
         }
     }
 }
-
-   

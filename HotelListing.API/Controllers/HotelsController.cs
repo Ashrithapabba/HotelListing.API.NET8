@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelListing.API.Data;
 using HotelListing.API.Contracts;
+using HotelListing.API.Repository;
 using AutoMapper;
 using HotelListing.API.Models.Hotel;
 

@@ -6,7 +6,7 @@ namespace HotelListing.API.Data
 {
     public class HotelListingDbContext : IdentityDbContext<ApiUser>
     {
-        public HotelListingDbContext(DbContextOptions options) : base(options)
+        public HotelListingDbContext(DbContextOptions<HotelListingDbContext> options) : base(options)
         {
             
         }
