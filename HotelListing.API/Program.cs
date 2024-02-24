@@ -140,13 +140,10 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-  
+    app.UseSwagger();
+
+    app.UseSwaggerUI();
 }
-
-
-app.UseSwagger();
-
-app.UseSwaggerUI();
 
 app.MapHealthChecks("/healthcheck", new HealthCheckOptions
 {
@@ -156,14 +153,11 @@ app.MapHealthChecks("/healthcheck", new HealthCheckOptions
         [HealthStatus.Healthy] = StatusCodes.Status200OK,
         [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable,
         [HealthStatus.Degraded] = StatusCodes.Status200OK,
-    },
-    ResponseWriter = WriteResponse
+    }
+  
 } );
 
-static Task WriteResponse(HttpContext context, HealthReport healthReport)
-{
-    
-}
+
 
 app.UseMiddleware<ExceptionMiddleware>();
 
