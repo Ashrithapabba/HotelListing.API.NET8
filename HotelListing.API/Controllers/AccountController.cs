@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HotelListing.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class AccountController : ControllerBase
     {
@@ -27,9 +27,7 @@ namespace HotelListing.API.Controllers
         public async Task<ActionResult> Register([FromBody] ApiUserDto apiUserDto)
         {
             _logger.LogInformation($"Registration Attempt for {apiUserDto.Email}");
-            try
-            {
-                var errors = await _authManager.Register(apiUserDto);
+            var errors = await _authManager.Register(apiUserDto);
 
                 if (errors.Any())
                 {
@@ -39,14 +37,7 @@ namespace HotelListing.API.Controllers
                     }
                     return BadRequest(ModelState);
                 }
-
                 return Ok();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Something went wrong in the {nameof(Register)} - User Registration attempt for  { apiUserDto.Email}");
-                return Problem($"Something went wrong in the {nameof(Register)} - Please contact the support", statusCode: 500);
-            }
         }
             
 
@@ -59,9 +50,7 @@ namespace HotelListing.API.Controllers
         public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
         {
             _logger.LogInformation($"Login Attempt for {loginDto.Email}");
-            try
-            {
-                var authResponse = await _authManager.Login(loginDto);
+            var authResponse = await _authManager.Login(loginDto);
 
                 if (authResponse == null)
                 {
@@ -69,12 +58,6 @@ namespace HotelListing.API.Controllers
                 }
 
                 return Ok(authResponse);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Something went wrong in the {nameof(Login)} - User Login attempt for  {loginDto.Email}");
-                return Problem($"Something went wrong in the {nameof(Login)} - Please contact the support", statusCode: 500);
-            }
          }
             
 
